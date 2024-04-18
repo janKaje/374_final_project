@@ -70,7 +70,7 @@ try:
     log(f"Summarizing...\n")
     top5system = sorted(solutions, key=lambda x: x[3])[0:6]
     top5operation = sorted(solutions, key=lambda x: x[4])[0:6]
-    log(f"Summary finished. Program done in {time_str(now() - starttime)}.\n")
+    log(f"Summary finished. Program done in {time_str(round(now() - starttime))}.\n")
     log(summary(top5system, "Top five with regards to system cost"))
     log(summary(top5operation, "Top five with regards to operation cost"))
     print("Logging data...")

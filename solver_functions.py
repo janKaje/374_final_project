@@ -1,4 +1,5 @@
 from background_functions import *
+from scipy.optimize import fsolve
 
 
 def pumps_required(flowrates, d):
@@ -40,6 +41,9 @@ def pumps_required(flowrates, d):
     # Flow must be greater than one. If less than one, drastically increase residuals to discourage fsolve from doing so
     if any([flow < 1 for flow in flowrates]):
         residuals = [(err + 1) * 1e4 if err > 0 else (err - 1) * 1e4 for err in residuals]
+
+    if __name__ == "__main__":
+        print(residuals)
 
     return residuals
 

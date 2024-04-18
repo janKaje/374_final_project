@@ -1,4 +1,4 @@
-from scipy.optimize import fsolve
+from scipy.special import lambertw
 from numpy import pi
 from units import *
 
@@ -47,21 +47,19 @@ def friction(epsilon, diameter, Re):
 def Colebrook(epsilon, diameter, Re):
     """Returns the Darcy friction factor according to the Colebrook equation."""
     if Re.asNumber() == 0:
-        return 0  # if Re is 0, rest of code will break.
-    solverr = lambda f: (f ** -0.5) - (
-            -2 * np.log10(epsilon.asNumber(mm) / 3.7 / diameter.asNumber(mm) + 2.51 / Re.asNumber() / f ** 0.5))
-    try:
-        return fsolve(solverr, 0.00001)[0]
-    except Exception or RuntimeWarning as ex:
-        print(solverr(0.00001))
-        raise ex
+        return 0
+    a = 2.51 / Re.asNumber()
+    b = (4 * epsilon / 14.8 / diameter).asNumber()
+    ins = np.log(10) / 2 / a * 10 ** (b / 2 / a)
+    f = 1 / (2 * lambertw(ins) / np.log(10) - b / a) ** 2
+    return f.real
 
 
 def Haaland(epsilon, diameter, Re):
     """Returns the Darcy friction factor according to the Haaland equation."""
     if Re.asNumber() == 0:
         return 0
-    return (-1.8 * np.log10(6.9 / Re.asNumber() + (epsilon.asNumber(mm) / 3.7 / diameter.asNumber(mm)) ** 1.11)) ** -2
+    return (-1.8 * np.log10(6.9 / Re.asNumber() + (epsilon / 3.7 / diameter).asNumber() ** 1.11)) ** -2
 
 
 def hLtotal(f, L, D, KLs, v):
