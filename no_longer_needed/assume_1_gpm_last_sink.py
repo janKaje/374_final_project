@@ -47,7 +47,7 @@ print(f"Total required pump pressure: {(total_head_required*rhoWater*grav).asUni
 print(f"Cost of pumps given choice A: ${np.ceil(total_head_required/pump_curve_A(totalflow))*1500}")
 print(f"Cost of pumps given choice B: ${np.ceil(total_head_required/pump_curve_B(totalflow))*800}")
 print(f"Cost of pumps given choice C: ${np.ceil(total_head_required/pump_curve_C(totalflow))*250}")
-# print(f'Check to make sure solver did well: {solve_head_losses(flowrates)}')
+print(f'Check to make sure solver did well: {solve_head_losses(flowrates)}')
 print(f'Head supplied by pump A at flowrate: {pump_curve_A(totalflow)}')
 print(f'Head supplied by pump B at flowrate: {pump_curve_B(totalflow)}')
 print(f'Head supplied by pump C at flowrate: {pump_curve_C(totalflow)}')

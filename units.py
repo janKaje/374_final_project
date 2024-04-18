@@ -2,6 +2,8 @@ from unum.units import *
 from unum import Unum
 import numpy as np
 
+# This is to initialize Unum units. Nothing else.
+
 # common AES/US Customary units
 lb = Unum.unit('lb', 0.4535924 * kg)
 ft = Unum.unit('ft', 0.3048 * m)
@@ -70,13 +72,13 @@ USD = Unum.unit('$')
 
 
 def FtoK(Tf):
-    '''Returns with units'''
+    """Returns with units"""
     Tr = (Tf + 459.67) * Rankine
     return Tr.asUnit(K)
 
 
 def KtoF(TK):
-    '''Returns w/o units'''
+    """Returns w/o units"""
     try:
         TK = TK.asNumber(K)
     except:

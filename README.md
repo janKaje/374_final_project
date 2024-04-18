@@ -1,62 +1,39 @@
-## 374 final project
+# 374 Final Project
 
-Current version:
+This is the python code used to assist with BYU CH EN 374 Winter 2024 final project. 
 
-Computes operating point and shows that it produces the required head and flowrate. Assumes we're using 16 of Pump C. Feel free to pull and make edits and tweak things. We can probably just link to this site when submitting our python.
+* `latest.log` has main final output 
+* `optimize_everything.py` is the main python file to run
+* `display.py`, `background_functions.py`, `parse_json.py`, `solver_functions.py`, and `units.py` are all supplementary files
+* `diagram_and_notes.pdf` is a hand-drawn diagram of the system, used to help me understand and keep track of things. Some numbers on it correspond to some in the code, but good luck figuring out what's what
+* `\logs` houses all logs
+* `\no_longer_needed` houses old code that's no longer used, but there for backup reasons
+* `raw_data.json` contains all the raw data used in optimization from the past run
 
-Below, all flowrates are flowrates out of the toilets and sinks, in units of gal/minute. Listed first is the first floor, then second, each going from closest to the main pipe to furthest away.
+The optimizer has run and all relevant data can be found in `latest.log`.
 
-Output of assume_1_gpm_last_sink.py:
-```
-Flowrates: [8.44413328 6.16273439 4.76610446 2.88076267 2.30501932 2.20906167
-            4.0730172  2.94887831 2.26262715 1.3388585  1.05406013]
-Total required head: 68.6519438176606 [ft]
-Total required flow: 39.44525708208349 [gal/minute]
-Total required pump pressure: 29.719839432171888 [psi]
-Cost of pumps given choice A: $9000
-Cost of pumps given choice B: $6400
-Cost of pumps given choice C: $4000
-Head supplied by pump A at flowrate: 13.322150811850278 [ft]
-Head supplied by pump B at flowrate: 8.881433874566849 [ft]
-Head supplied by pump C at flowrate: 4.440716937283424 [ft]
-Number of pumps of A required in series at flowrate: 6
-Number of pumps of B required in series at flowrate: 8
-Number of pumps of C required in series at flowrate: 16
-```
-This one is missing the last sink in the flowrates because it is assumed to be 1 gal/minute
+## Method
 
-Output of solve_operating_point_pump_A.py:
-```
-Maximum total flow: 40.1571320300051 [gal/minute]
-Maximum head required: 69.73285448245441 [ft]
-Maximum pressure required: 30.187772160828725 [psi]
-Flowrates: [8.52389583 6.2215246  4.81201538 2.90923581 2.32823715 2.23156689
-            4.21470215 3.05271696 2.34325034 1.38807275 1.09372465 1.03818952]
-Wattage required at maximum flow: 585.7501714838108 [W]
-Cost of electricity for 1 month at 2023 US electricity prices, assuming constant max flow: 54.42767163420711 [$]
-```
+This incredibly cutting-edge optimization technique consists of iterating through each possible combination of diameter sizes and pump types, calculating the total system cost and monthly maximum operating cost of each combination, and sorts all permutations of said parameters by those costs. The program follows the following steps:
+1) A list of all possible permutations of parameters are made
+2) For each one:
+   1) The last sink on the last floor is assumed to have a flowrate of 1 gpm and fsolve is called to find the necessary flowrates through all other appliances to make that happen
+   2) The minimum amounts of the given pump type (both in series and in parallel) necessary to sustain said flow are calculated
+   3) The actual operating point is calculated by another call to fsolve
+   4) The system cost (or installation cost -- the cost of all physical components in the given system) is calculated, and
+   5) The maximum monthy operating cost (just electricity) is estimated
+3) The different relevant quantities are compiled, sorted, and logged
 
-Output of solve_operating_point_pump_B.py:
-```
-Maximum total flow: 39.61475020547186 [gal/minute]
-Maximum head required: 68.90745058529323 [ft]
-Maximum pressure required: 29.830449848798164 [psi]
-Flowrates: [8.46302311 6.17665708 4.7769768  2.88750502 2.31051694 2.21439039
-            4.10686456 2.97368162 2.28188288 1.3506089  1.06352819 1.00911471]
-Wattage required at maximum flow: 642.3739477092164 [W]
-Cost of electricity for 1 month at 2023 US electricity prices, assuming constant max flow: 59.68913027156131 [$]
-```
+As you can tell, this is not very fast. fsolve is called an insane number of times and there are many, many tasks to run. Each run takes about an hour and thirty minutes on my laptop to compute. For this reason, the raw output data as well as detailed logs are written to file to avoid having to run this program over and over again.
 
-Output of solve_operating_point_pump_C.py:
-```
-Maximum total flow: 39.61475020547186 [gal/minute]
-Maximum head required: 68.90745058529323 [ft]
-Maximum pressure required: 29.830449848798164 [psi]
-Flowrates: [8.46302311 6.17665708 4.7769768  2.88750502 2.31051694 2.21439039
-            4.10686456 2.97368162 2.28188288 1.3506089  1.06352819 1.00911471]
-Wattage required at maximum flow: 734.1416545248188 [W]
-Cost of electricity for 1 month at 2023 US electricity prices, assuming constant max flow: 68.21614888178436 [$]
-```
+## Assumptions
 
+The 90-degree bends made to route the pipe to the other side of the room in each floor are considered to be exactly at the rightmost toilet and sink. Technically they would have to be set at least an inch or two to the right, but that length is considered negligible.
 
-As you can see, both the flowrate and head are greater at the operating point than the minimum required no matter which type of pump is used, meaning that the system meets the specifications.
+The total loss of pressure and kinetic energy along a length of piping is assumed to be equal to the energy lost to friciton plus the energy converted to gravitational potential energy. Thus we can assume that it would behave the same exact way as would a similarly structured system that was laid flat, where each pipe that would lead "up" instead has that height differential more head loss.
+
+There are only 5 relevant categories for pipe sizes: the main vertical pipe that goes from the basement all the way to the second floor, each floor's pipe that runs under the floor, and each floor's collection of vertical pipes that run from the floor to appliances. This vastly simplifies calculation (and the lives of the hypothetical plumbers that might be installing this).
+
+All pumps are directly at the entrance to the main pipe at z=0. In practice, pump systems (especially those with many in series and/or parallel) would need extra piping to connect them which would slightly change the system curve, but for ease of calculation and because of the magnitude of other losses this is considered negligible.
+
+Pipe diameter is assumed to never increase along the path of water flow. It just makes sense that the pipes with more flow should be bigger, and also drastically reduces computation time.
