@@ -1,3 +1,22 @@
+Building parameter array...
+Parameter array built! Time taken: 0.0 seconds. 138 arrays to try.
+Executing 138 solver functions...
+10 options solved so far in 18 seconds.
+20 options solved so far in 1 minute, 2 seconds.
+30 options solved so far in 1 minute, 40 seconds.
+40 options solved so far in 2 minutes, 21 seconds.
+50 options solved so far in 3 minutes, 27 seconds.
+60 options solved so far in 4 minutes, 19 seconds.
+70 options solved so far in 4 minutes, 40 seconds.
+80 options solved so far in 4 minutes, 57 seconds.
+90 options solved so far in 5 minutes, 17 seconds.
+100 options solved so far in 6 minutes, 3 seconds.
+110 options solved so far in 6 minutes, 55 seconds.
+120 options solved so far in 7 minutes, 42 seconds.
+130 options solved so far in 8 minutes, 23 seconds.
+Done! Solved 138 functions in 8 minutes, 38 seconds.
+Summarizing...
+Summary finished. Program done in 8 minutes, 38 seconds.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Top five with regards to system cost

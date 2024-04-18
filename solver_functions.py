@@ -43,7 +43,8 @@ def pumps_required(flowrates, d):
         residuals = [(err + 1) * 1e4 if err > 0 else (err - 1) * 1e4 for err in residuals]
 
     if __name__ == "__main__":
-        print(residuals)
+        # print(residuals)
+        pass
 
     return residuals
 
@@ -58,7 +59,11 @@ def solve_pumps_required(d, pump_type):
              1.3388585, 1.05406013]
 
     # Pass to fsolve
-    flowrates = fsolve(pumps_required, guess, args=d)
+    flowrates, dic, ier, msg = fsolve(pumps_required, guess, args=d, full_output=True)
+
+    # If solution did not converge, return an absurdly high number of pumps
+    # if ier != 1:
+    #     return [1e3, 1e3]
 
     # Parse function return
     fl1, fl2, fl3, fl4, fl5, fl6, fl7, fl8, fl9, fl10, fl11 = [i * gal / minute for i in flowrates]
@@ -196,9 +201,13 @@ def solve_head_losses(d, pump):
                    2.26262715, 1.3388585, 1.05406013, 1]
 
     # Solve for actual head losses
-    soln = fsolve(head_losses, guess_array, args=(d, pump, number_of_pumps[0]))
+    soln, dic, ier, msg = fsolve(head_losses, guess_array, args=(d, pump, number_of_pumps[0]), full_output=True)
 
-    # Return both
+    # In case solution did not converge, remove from list.
+    if ier != 1:
+        return [1e3 for i in range(12)], [1e3, 1e3]  # Making everything huge will remove it from relevant summaries
+
+    # Return both if everything turned out well
     return soln, number_of_pumps
 
 
@@ -343,8 +352,9 @@ def compute_cost_with_specifications(array_of_arguments):
 
     # Left from debugging
     if __name__ == "__main__":
-        # print(type(flowrates))
-        pass
+        print("DEBUG cost fun")
+        print(total_head_required)
+        print(pump_curve_C(totalflow/no_pumps[1])*no_pumps[0])
 
     # Return every necessary bit of information
     return [diams, pump_type, no_pumps, system_cost, month_operating_cost, list(flowrates),
@@ -371,8 +381,5 @@ def build_parameter_array():
 
 # More debugging
 if __name__ == "__main__":
-    pars = build_parameter_array()
     print("DEBUG main")
-    print(pars[0])
-    print(compute_cost_with_specifications(pars[0]))
-    print(compute_cost_with_specifications([1, 1, 1, 1, 1, "A"]))
+    print(compute_cost_with_specifications([1, 1, 0.5, 1, 0.5, "C"]))

@@ -10,6 +10,7 @@ logtext = ""
 try:
     timetext = dt.now().strftime('%Y%m%d_%H%M%S')
 
+
     def log(txt):
         """Logs message to console and .log file."""
         print(txt)
@@ -36,10 +37,10 @@ try:
 
             # Helpful log messages to let you know how far along the program is
             counter += 1
-            if len(params)-counter != 0:
-                time_left = round((now() - function_timer)/counter*(len(params)-counter))
+            if len(params) - counter != 0:
+                time_left = round((now() - function_timer) / counter * (len(params) - counter))
                 print(f"Estimated time remaining: {time_str(time_left)}")
-            if counter% 10 == 0:
+            if counter % 10 == 0:
                 time_taken = round(now() - function_timer)
                 log(f"{counter} options solved so far in {time_str(time_taken)}.\n")
 
@@ -47,6 +48,7 @@ try:
         time_taken = round(now() - function_timer)
         log(f"Done! Solved {counter} functions in {time_str(time_taken)}.\n")
         return results
+
 
     # Start timer
     starttime = now()

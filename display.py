@@ -1,6 +1,6 @@
 def summary(arr, msg):
     """Takes an array of solutions and returns appropriate text that summarizes it."""
-    maxlen = [9, 9, 34, 11, 24, 10, 10, 19]
+    maxlen = [9, 9, 18, 11, 28, 10, 10, 19]
     rounded = [[round(item, 2) if isinstance(item, float) else item for item in sublist] for sublist in arr]
     roundedtwice = [[[round(subitem, 2) for subitem in item] if isinstance(item, list) else item for item in sublist]
                     for sublist in rounded]
@@ -17,9 +17,12 @@ def summary(arr, msg):
     txt = "\n" + "-" * (5 + sum(maxlen)) + "\n"
     txt += msg + "\n"
     txt += "-" * (5 + sum(maxlen)) + "\n"
-    txt += f"|Diameters{' ' * (maxlen[0] - 9)}|Pump Type{' ' * (maxlen[1] - 9)}|Number of Pumps [series, parallel]{' ' * (maxlen[2] - 34)}" \
-           + f"|System Cost{' ' * (maxlen[3] - 11)}|Operating Cost (1 month){' ' * (maxlen[4] - 24)}" \
+    txt += f"|Diameters{' ' * (maxlen[0] - 9)}|Pump Type{' ' * (maxlen[1] - 9)}|Number of Pumps{' ' * (maxlen[2] - 15)}" \
+           + f"|System Cost{' ' * (maxlen[3] - 11)}|Operating Cost (1 month max){' ' * (maxlen[4] - 28)}" \
            + f"|Flow Rates{' ' * (maxlen[5] - 10)}|Total Flow{' ' * (maxlen[6] - 10)}|Total Head Required{' ' * (maxlen[7] - 19)}|\n"
+    txt += f"| in{' ' * (maxlen[0] - 3)}|{' ' * maxlen[1]}| series, parallel {' ' * (maxlen[2] - 18)}" \
+           + f"| ${' ' * (maxlen[3] - 2)}| ${' ' * (maxlen[4] - 2)}" \
+           + f"| gal/min{' ' * (maxlen[5] - 8)}| gal/min{' ' * (maxlen[6] - 8)}| ft{' ' * (maxlen[7] - 3)}|\n"
     txt += f"|{'-' * maxlen[0]}|{'-' * maxlen[1]}|{'-' * maxlen[2]}|{'-' * maxlen[3]}|{'-' * maxlen[4]}|{'-' * maxlen[5]}|{'-' * maxlen[6]}|{'-' * maxlen[7]}|\n"
     for sublist in roundedtwice:
         txt += f"|{str(sublist[0])}{' ' * (maxlen[0] - len(str(sublist[0])))}"
@@ -43,25 +46,24 @@ def time_str(time):
     elif time // 3600 > 0:
         st += str(time // 3600) + ' hour'
 
-    if time % 3600 // 60 > 1 or time // 3600 > 0:
-        if time // 3600 > 0:
-            st += ', ' + str(time % 3600 // 60) + ' minutes'
-        else:
-            st += str(time // 60) + ' minutes'
-    elif time % 3600 // 60 > 0 or time // 3600 > 0:
+
+    if time % 3600 // 60 > 0 or time // 3600 > 0:
         if time // 3600 > 0:
             st += ', ' + str(time % 3600 // 60) + ' minute'
         else:
             st += str(time // 60) + ' minute'
+        if time % 3600 // 60 > 1 or time // 3600 > 0:
+            st += "s"
 
-    if time % 60 > 1 or time % 3600 // 60 > 0 or time // 3600 > 0:
-        if time % 3600 // 60 > 0 or time // 3600 > 0:
-            st += ', ' + str(time % 60) + ' seconds'
-        else:
-            st += str(time % 60) + ' seconds'
-    elif time % 60 > 0 or time % 3600 // 60 > 0 or time // 3600 > 0:
+    if time % 60 > 0 or time % 3600 // 60 > 0:
         if time % 3600 // 60 > 0 or time // 3600 > 0:
             st += ', ' + str(time % 60) + ' second'
         else:
             st += str(time % 60) + ' second'
+        if time % 60 > 1 or time % 60 == 0:
+            st += "s"
+
     return st
+
+if __name__ == "__main__":
+    print(time_str(121))
