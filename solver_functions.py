@@ -2,26 +2,20 @@ from background_functions import *
 from scipy.optimize import fsolve
 
 
-def pumps_required(flowrates, d):
+def pumps_required(flowrates, d, flows2):
     """Goes to solve_pumps_required to figure out how many pumps the system will need.
     This function assumes that the last sink will have a flowrate of 1 gpm. It's used to solve
     for the flowrates at each appliance that will make appropriate head losses equal."""
 
     # Break apart array for better legibility
-    fl1, fl2, fl3, fl4, fl5, fl6, fl7, fl8, fl9, fl10, fl11 = [i * gal / minute for i in flowrates]
-    fl12 = 1 * gal / minute  # hard set final sink flowrate to 1 gal/min
+    fl1, fl2, fl3, fl4, fl5, fl6 = [i * gal / minute for i in flowrates]
+    fl7, fl8, fl9, fl10, fl11, fl12 = flows2
 
     # Add units to diameters (required for head loss, friction functions)
     d = [i * inch for i in d]
 
     # Array which fsolve will try to make zero.
     residuals = [
-        # Top floor
-        hl23(fl12, d[3]) + hl26(fl12, d[4]) - hl22(fl11, d[4]),
-        hl21(fl12 + fl11, d[3]) + hl22(fl11, d[4]) - hl20(fl10, d[4]),
-        hl19(fl10 + fl11 + fl12, d[3]) + hl20(fl10, d[4]) - hl18(fl9, d[4]),
-        hl17(fl9 + fl10 + fl11 + fl12, d[3]) + hl18(fl9, d[4]) - hl16(fl8, d[4]),
-        hl15(fl8 + fl9 + fl10 + fl11 + fl12, d[3]) + hl16(fl8, d[4]) - hl14(fl7, d[4]),
 
         # Bottom floor
         hl12(fl6, d[1]) + hl25(fl6, d[2]) - hl11(fl5, d[2]),
@@ -31,7 +25,8 @@ def pumps_required(flowrates, d):
         hl4(fl2 + fl3 + fl4 + fl5 + fl6, d[1]) + hl5(fl2, d[2]) - hl3(fl1, d[2]),
 
         # Split
-        hl2(fl1 + fl2 + fl3 + fl4 + fl5 + fl6, d[1]) + hl3(fl1, d[2]) - hl13(fl7 + fl8 + fl9 + fl10 + fl11 + fl12, d[0]) \
+        hl2(fl1 + fl2 + fl3 + fl4 + fl5 + fl6, d[1]) + hl3(fl1, d[2]) \
+        - hl13(fl7 + fl8 + fl9 + fl10 + fl11 + fl12, d[0]) \
         - hl24(fl7 + fl8 + fl9 + fl10 + fl11 + fl12, d[3]) - hl14(fl7, d[4])
     ]
 
@@ -42,9 +37,9 @@ def pumps_required(flowrates, d):
     if any([flow < 1 for flow in flowrates]):
         residuals = [(err + 1) * 1e4 if err > 0 else (err - 1) * 1e4 for err in residuals]
 
-    if __name__ == "__main__":
-        # print(residuals)
-        pass
+    # if __name__ == "__main__":
+    # print(residuals)
+    # pass
 
     return residuals
 
@@ -54,26 +49,51 @@ def solve_pumps_required(d, pump_type):
     Works by first solving for the flowrates, then computing the head required to push those flowrates through pipes,
     then depending on which type of pump is used, calculates how many pumps are required."""
 
-    # Guess obtained from no_longer_needed/assume_1_gpm.py. Relatively close in almost all instances.
-    guess = [8.44413328, 6.16273439, 4.76610446, 2.88076267, 2.30501932, 2.20906167, 4.0730172, 2.94887831, 2.26262715,
-             1.3388585, 1.05406013]
+    # The following can be solved one-by-one, which eliminates much of the hassle and makes it easier for fsolve to
+    # find everything
+    fl12 = 1 * gal / minute
+    fl11 = max(fsolve(lambda fl11: (
+            hl23(fl12, d[3] * inch) + hl26(fl12, d[4] * inch) - hl22(fl11[0] * gal / minute, d[4] * inch)).asNumber(
+        ft), 1.05)[0], 1) * gal / minute
+    fl10 = fsolve(lambda fl10: (hl21(fl12 + fl11, d[3] * inch) + hl22(fl11, d[4] * inch) - hl20(fl10[0] * gal / minute,
+                                                                                                d[4] * inch)).asNumber(
+        ft), 1.34)[0] * gal / minute
+    fl9 = fsolve(lambda fl9: (
+            hl19(fl10 + fl11 + fl12, d[3] * inch) + hl20(fl10, d[4] * inch) - hl18(fl9[0] * gal / minute,
+                                                                                   d[4] * inch)).asNumber(ft),
+                 2.26)[0] * gal / minute
+    fl8 = fsolve(lambda fl8: (
+            hl17(fl9 + fl10 + fl11 + fl12, d[3] * inch) + hl18(fl9, d[4] * inch) - hl16(fl8[0] * gal / minute,
+                                                                                        d[4] * inch)).asNumber(ft),
+                 2.95)[0] * gal / minute
+    fl7 = fsolve(lambda fl7: (
+            hl15(fl8 + fl9 + fl10 + fl11 + fl12, d[3] * inch) + hl16(fl8, d[4] * inch) - hl14(fl7[0] * gal / minute,
+                                                                                              d[4] * inch)).asNumber(
+        ft), 4.07)[0] * gal / minute
+    flows2 = [fl7, fl8, fl9, fl10, fl11, fl12]
+
+    # Guess obtained from no_longer_needed/assume_1_gpm.py. Relatively close in many instances.
+    guess = [8.44413328, 6.16273439, 4.76610446, 2.88076267, 2.30501932, 2.20906167]
 
     # Pass to fsolve
-    flowrates, dic, ier, msg = fsolve(pumps_required, guess, args=d, full_output=True)
+    flowrates, dic, ier, msg = fsolve(pumps_required, guess, args=(d, flows2), full_output=True)
 
     # If solution did not converge, return an absurdly high number of pumps
-    # if ier != 1:
-    #     return [1e3, 1e3]
+    if ier != 1:
+        return [1e3, 1e3]
 
     # Parse function return
-    fl1, fl2, fl3, fl4, fl5, fl6, fl7, fl8, fl9, fl10, fl11 = [i * gal / minute for i in flowrates]
-    fl12 = 1 * gal / minute  # hard set final sink flowrate to 1 gal/min
-    totalflow = sum(flowrates) * gal / minute + fl12
+    fl1, fl2, fl3, fl4, fl5, fl6 = [i * gal / minute for i in flowrates]
+
+    totalflow = sum(flowrates) * gal / minute + fl7 + fl8 + fl9 + fl10 + fl11 + fl12
     d = [i * inch for i in d]
 
     # Total head required by system
     total_head_required = hl1(totalflow, d[0]) + hl13(fl7 + fl8 + fl9 + fl10 + fl11 + fl12, d[0]) \
-                          + hl24(fl7 + fl8 + fl9 + fl10 + fl11 + fl12, d[3]) + hl14(fl7, d[4])
+                          + hl24(fl7 + fl8 + fl9 + fl10 + fl11 + fl12, d[3]) \
+                          + hl15(fl8 + fl9 + fl10 + fl11 + fl12, d[3]) + hl17(fl9 + fl10 + fl11 + fl12, d[3]) \
+                          + hl19(fl10 + fl11 + fl12, d[3]) + hl21(fl11 + fl12, d[3]) + hl23(fl12, d[3]) \
+                          + hl26(fl12, d[4])
     # Same number, used for debugging
     total_head_required_alt = hl1(totalflow, d[0]) + hl2(fl1 + fl2 + fl3 + fl4 + fl5 + fl6, d[1]) \
                               + hl3(fl1, d[2])
@@ -81,13 +101,15 @@ def solve_pumps_required(d, pump_type):
     # Only runs if this file itself is run, not if it is imported to another file. Used for debugging.
     if __name__ == "__main__":
         print("\nDEBUG solver")
-        print(flowrates)
-        print(totalflow)
+        print("1st flow array: " + str(flowrates))
+        print("2nd flow array: " + str(flows2))
+        print("Total flow: " + str(totalflow))
         print("check heads")
         print(total_head_required)
         print(total_head_required_alt)
         print("check solver")
-        print(pumps_required(flowrates, [i.asNumber(inch) for i in d]))
+        print(pumps_required(flowrates, [i.asNumber(inch) for i in d], flows2))
+        print(f"Single pump head at {totalflow}:")
         if pump_type == "A":
             print(pump_curve_A(totalflow))
         if pump_type == "B":
@@ -100,7 +122,7 @@ def solve_pumps_required(d, pump_type):
 
         # Starts by assuming only 1 in parallel. Increases until the flowrate is sufficient.
         no_parallel = 1
-        while pump_curve_A(totalflow / no_parallel) <= 0*ft and no_parallel < 100:
+        while pump_curve_A(totalflow / no_parallel) <= 0 * ft and no_parallel < 100:
             no_parallel += 1
         if no_parallel > 99:
             raise RuntimeError(
@@ -113,7 +135,7 @@ def solve_pumps_required(d, pump_type):
     if pump_type == "B":
 
         no_parallel = 1
-        while pump_curve_B(totalflow / no_parallel) <= 0*ft and no_parallel < 100:
+        while pump_curve_B(totalflow / no_parallel) <= 0 * ft and no_parallel < 100:
             no_parallel += 1
         if no_parallel > 99:
             raise RuntimeError(
@@ -124,7 +146,7 @@ def solve_pumps_required(d, pump_type):
     if pump_type == "C":
 
         no_parallel = 1
-        while pump_curve_C(totalflow / no_parallel) <= 0*ft and no_parallel < 100:
+        while pump_curve_C(totalflow / no_parallel) <= 0 * ft and no_parallel < 100:
             no_parallel += 1
         if no_parallel > 99:
             raise RuntimeError(
@@ -202,6 +224,12 @@ def solve_head_losses(d, pump):
 
     # Solve for actual head losses
     soln, dic, ier, msg = fsolve(head_losses, guess_array, args=(d, pump, number_of_pumps[0]), full_output=True)
+
+    # Debug
+    if __name__ == "__main__":
+        print("DEBUG solve head losses")
+        print("Check solver:")
+        print(head_losses(soln, d, pump, number_of_pumps[0]))
 
     # In case solution did not converge, remove from list.
     if ier != 1:
@@ -328,8 +356,43 @@ def compute_cost_with_specifications(array_of_arguments):
     totalflow = sum(flowrates) * gal / minute
 
     # Calculate total head required by system (which thanks to fsolve is the same as pump head delivered
-    total_head_required = hl1(totalflow, diams[0] * inch) + hl2(fl1 + fl2 + fl3 + fl4 + fl5 + fl6,
-                                                                diams[1] * inch) + hl3(fl1, diams[2] * inch)
+    d = [i * inch for i in diams]
+    headlosses = [
+        hl1(totalflow, d[0]),
+        hl2(fl1 + fl2 + fl3 + fl4 + fl5 + fl6, d[1]),
+        hl3(fl1, d[2]),
+        hl4(fl2 + fl3 + fl4 + fl5 + fl6, d[1]),
+        hl5(fl2, d[2]),
+        hl6(fl3 + fl4 + fl5 + fl6, d[1]),
+        hl7(fl3, d[2]),
+        hl8(fl4 + fl5 + fl6, d[1]),
+        hl9(fl4, d[2]),
+        hl10(fl5 + fl6, d[1]),
+        hl11(fl5, d[2]),
+        hl12(fl6, d[1]),
+        hl13(fl7 + fl8 + fl9 + fl10 + fl11 + fl12, d[0]),
+        hl14(fl7, d[4]),
+        hl15(fl8 + fl9 + fl10 + fl11 + fl12, d[3]),
+        hl16(fl8, d[4]),
+        hl17(fl9 + fl10 + fl11 + fl12, d[3]),
+        hl18(fl9, d[4]),
+        hl19(fl10 + fl11 + fl12, d[3]),
+        hl20(fl10, d[4]),
+        hl21(fl11 + fl12, d[3]),
+        hl22(fl11, d[4]),
+        hl23(fl12, d[3]),
+        hl24(fl7 + fl8 + fl9 + fl10 + fl11 + fl12, d[3]),
+        hl25(fl6, d[2]),
+        hl26(fl12, d[4])
+    ]
+
+    total_head_required = headlosses[0] + headlosses[12] + headlosses[23] + headlosses[14] + headlosses[16] + \
+                          headlosses[18] + headlosses[20] + headlosses[22] + headlosses[25]
+    total_head_required_2 = headlosses[0] + headlosses[1] + headlosses[2]
+
+    if np.abs(total_head_required - total_head_required_2) / total_head_required > 0.01 and __name__ == "__main__":
+        print(array_of_arguments)
+        print("Heads differ too much. Look into that")
 
     # Calculate wattage and cost of pumps
     shaft_work = total_head_required * totalflow * rhoWater * grav
@@ -353,8 +416,10 @@ def compute_cost_with_specifications(array_of_arguments):
     # Left from debugging
     if __name__ == "__main__":
         print("DEBUG cost fun")
-        print(total_head_required)
-        print(pump_curve_C(totalflow/no_pumps[1])*no_pumps[0])
+        print("total head required: " + str(total_head_required))
+        print("total pump head supplied: " + str(pump_curve_A(totalflow / no_pumps[1]) * no_pumps[0]))
+        print("All head losses:")
+        print([f"{i + 1}: {round(j.asNumber(ft), 3, )}" for i, j in enumerate(headlosses)])
 
     # Return every necessary bit of information
     return [diams, pump_type, no_pumps, system_cost, month_operating_cost, list(flowrates),
@@ -379,7 +444,8 @@ def build_parameter_array():
 
     return params
 
+
 # More debugging
 if __name__ == "__main__":
     print("DEBUG main")
-    print(compute_cost_with_specifications([1, 1, 0.5, 1, 0.5, "C"]))
+    print(compute_cost_with_specifications([1, 0.75, 0.75, 1, 1, "A"]))

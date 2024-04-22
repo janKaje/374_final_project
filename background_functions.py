@@ -22,10 +22,10 @@ gasconst = 8.31446261815324 * J / mol / K
 # KLs:
 branch_tee = 2
 straight_tee = 0.9
-toilet = 14 + 0.9 + 0.2  # every toilet comes with a bend and valve so it's all just grouped together for simplicity
-sink = 10 + 0.9 + 0.2  # same here
+toilet = 14 + 0.9 + 10  # every toilet comes with a bend and valve so it's all just grouped together for simplicity
+sink = 10 + 0.9 + 10  # same here
 bend = 0.9
-valve = 0.2
+valve = 10
 
 
 # Friction and head loss finders
@@ -33,6 +33,8 @@ valve = 0.2
 def friction(epsilon, diameter, Re):
     """Returns Darcy friction factor at given parameters.
     Tries the Colebrook equation first, then switches to Haaland if necessary."""
+    if Re.asNumber() <= 2300:
+        return Re/64
     try:
         return Colebrook(epsilon, diameter, Re)
     except Exception or RuntimeWarning as ex:
