@@ -10,7 +10,10 @@ This is the python code used to assist with BYU CH EN 374 Winter 2024 final proj
 * `\no_longer_needed` houses old code that's no longer used, but there for backup reasons
 * `raw_data.json` contains all the raw data used in optimization from the past run
 
-The optimizer has run and all relevant data can be found in `latest.log`.
+The optimizer has run and all relevant operating point data can be found in `latest.log`.
+The other data required can be found by independently running `solver_functions.py`. 
+
+Note that many combinations of pipe diameter and pump type did not allow our solver to converge. However, enough worked with our current system that we can say we tried many, many different designs.
 
 ## Method
 

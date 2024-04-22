@@ -51,9 +51,9 @@ def solve_pumps_required(d, pump_type):
 
     # The following can be solved one-by-one, which eliminates much of the hassle and makes it easier for fsolve to
     # find everything
-    fl12 = 1 * gal / minute
-    fl11 = max(fsolve(lambda fl11: (
-            hl23(fl12, d[3] * inch) + hl26(fl12, d[4] * inch) - hl22(fl11[0] * gal / minute, d[4] * inch)).asNumber(
+    fl11 = 1 * gal / minute
+    fl12 = max(fsolve(lambda fl12: (
+            hl23(fl12[0] * gal/minute, d[3] * inch) + hl26(fl12[0] * gal/minute, d[4] * inch) - hl22(fl11, d[4] * inch)).asNumber(
         ft), 1.05)[0], 1) * gal / minute
     fl10 = fsolve(lambda fl10: (hl21(fl12 + fl11, d[3] * inch) + hl22(fl11, d[4] * inch) - hl20(fl10[0] * gal / minute,
                                                                                                 d[4] * inch)).asNumber(
@@ -107,6 +107,7 @@ def solve_pumps_required(d, pump_type):
         print("check heads")
         print(total_head_required)
         print(total_head_required_alt)
+        print(f"required pressure : {(total_head_required*grav*rhoWater).asUnit(psi)}")
         print("check solver")
         print(pumps_required(flowrates, [i.asNumber(inch) for i in d], flows2))
         print(f"Single pump head at {totalflow}:")
@@ -448,4 +449,4 @@ def build_parameter_array():
 # More debugging
 if __name__ == "__main__":
     print("DEBUG main")
-    print(compute_cost_with_specifications([1, 0.75, 0.75, 1, 1, "A"]))
+    print(compute_cost_with_specifications([1, 0.75, 0.5, 0.75, 0.5, "C"]))
