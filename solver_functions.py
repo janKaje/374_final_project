@@ -100,14 +100,14 @@ def solve_pumps_required(d, pump_type):
 
     # Only runs if this file itself is run, not if it is imported to another file. Used for debugging.
     if __name__ == "__main__":
-        print("\nDEBUG solver")
+        print("DEBUG solver")
         print("1st flow array: " + str(flowrates))
         print("2nd flow array: " + str(flows2))
         print("Total flow: " + str(totalflow))
-        print("check heads")
+        print("Total head required:")
         print(total_head_required)
         print(total_head_required_alt)
-        print(f"required pressure : {(total_head_required*grav*rhoWater).asUnit(psi)}")
+        print(f"required pressure : {(total_head_required * grav * rhoWater).asUnit(psi)}")
         print("check solver")
         print(pumps_required(flowrates, [i.asNumber(inch) for i in d], flows2))
         print(f"Single pump head at {totalflow}:")
@@ -132,7 +132,7 @@ def solve_pumps_required(d, pump_type):
         # Returns a list: first is number of pumps in series, second is number of pumps in parallel.
         return [np.ceil(total_head_required / pump_curve_A(totalflow / no_parallel)), no_parallel]
 
-    # Similar functions below.
+    # Similar below.
     if pump_type == "B":
 
         no_parallel = 1
@@ -234,7 +234,7 @@ def solve_head_losses(d, pump):
 
     # In case solution did not converge, remove from list.
     if ier != 1:
-        return [1e3 for i in range(12)], [1e3, 1e3]  # Making everything huge will remove it from relevant summaries
+        return [1e3 for _ in range(12)], [1e3, 1e3]  # Making everything huge will remove it from relevant summaries
 
     # Return both if everything turned out well
     return soln, number_of_pumps
@@ -420,7 +420,7 @@ def compute_cost_with_specifications(array_of_arguments):
         print("total head required: " + str(total_head_required))
         print("total pump head supplied: " + str(pump_curve_A(totalflow / no_pumps[1]) * no_pumps[0]))
         print("All head losses:")
-        print([f"{i + 1}: {round(j.asNumber(ft), 3, )}" for i, j in enumerate(headlosses)])
+        print([f"{i + 1}: {round(j.asNumber(ft), 3)}" for i, j in enumerate(headlosses)])
 
     # Return every necessary bit of information
     return [diams, pump_type, no_pumps, system_cost, month_operating_cost, list(flowrates),
@@ -448,5 +448,4 @@ def build_parameter_array():
 
 # More debugging
 if __name__ == "__main__":
-    print("DEBUG main")
     print(compute_cost_with_specifications([1, 0.75, 0.5, 0.75, 0.5, "C"]))

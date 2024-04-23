@@ -34,7 +34,7 @@ def friction(epsilon, diameter, Re):
     """Returns Darcy friction factor at given parameters.
     Tries the Colebrook equation first, then switches to Haaland if necessary."""
     if Re.asNumber() <= 2300:
-        return Re/64
+        return 64 / Re
     try:
         return Colebrook(epsilon, diameter, Re)
     except Exception or RuntimeWarning as ex:
